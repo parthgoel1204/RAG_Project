@@ -1,0 +1,36 @@
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./rag_engine:/app/rag_engine
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/rag_project_db
+      - PORT=5000
+      - PYTHON_PATH=/usr/bin/python3
+      - JWT_SECRET=${JWT_SECRET}
+      - CHATGROQ_API_KEY=${CHATGROQ_API_KEY}
+    depends_on:
+      - mongo
+
+  rag_engine:
+    build: ./rag_engine
+    volumes:
+      - ./uploads:/app/uploads
+      - ./rag_engine/data:/app/data
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:

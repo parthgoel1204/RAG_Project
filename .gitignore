@@ -1,0 +1,10 @@
+# .gitignore
+node_modules/
+__pycache__/
+*.pyc
+.env
+uploads/
+faiss_index/
+chunks/
+*.db
+*.log

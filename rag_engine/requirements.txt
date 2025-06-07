@@ -1,0 +1,13 @@
+transformers
+faiss-cpu
+pdfplumber
+sentence-transformers
+pymongo
+python-dotenv
+numpy
+langchain
+langchain-community
+langchain-huggingface
+
+#HTTP client libraries, if you need to make REST calls:
+requests
