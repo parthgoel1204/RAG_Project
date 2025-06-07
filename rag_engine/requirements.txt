@@ -1,6 +1,7 @@
 transformers
 faiss-cpu
 pdfplumber
+torch==2.2.2
 sentence-transformers
 pymongo
 python-dotenv

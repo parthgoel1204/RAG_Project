@@ -1,18 +1,21 @@
 # rag_project/backend/Dockerfile
 
-FROM node:18-alpine
+FROM node:18-slim
 WORKDIR /app
 
-# Install Python and pip
-RUN apk add --no-cache python3 py3-pip
+# Install Python and pip (use apt-get for Debian/Ubuntu)
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv
 
 # Copy Node.js app files
 COPY backend/package*.json ./
 RUN npm install --production
 
-# Copy and install Python requirements
+# Copy and install Python requirements in a virtual environment
 COPY rag_engine/requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3 -m venv /opt/venv \
+    && . /opt/venv/bin/activate \
+    && pip install --no-cache-dir -r requirements.txt
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy backend and rag_engine code
 COPY backend/ ./

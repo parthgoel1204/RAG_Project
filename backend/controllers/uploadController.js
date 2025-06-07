@@ -38,11 +38,12 @@ exports.handleFileUpload = async (req, res) => {
     await file.mv(filePath);
 
     // 5. Invoke Python ingestion
-    const pythonExe = config.PYTHON_PATH;
+    const pythonExe = process.env.PYTHON_PATH || "python3"; 
     const script = path.join(process.cwd(), "rag_engine", "document_ingestor.py");
     const pyProcess = spawn(pythonExe, ["-u", script, "--filepath", filePath], {
-      cwd: path.join(__dirname, "..", ".."),
+      cwd: process.cwd(),
     });
+
 
     let stdoutData = "";
     let stderrData = "";

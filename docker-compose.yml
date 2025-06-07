@@ -1,4 +1,3 @@
-
 services:
   mongo:
     image: mongo:6.0
@@ -9,9 +8,11 @@ services:
       - mongo_data:/data/db
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - ./uploads:/app/uploads
       - ./rag_engine:/app/rag_engine
@@ -19,8 +20,9 @@ services:
       - MONGO_URI=mongodb://mongo:27017/rag_project_db
       - PORT=5000
       - PYTHON_PATH=/usr/bin/python3
-      - JWT_SECRET=${JWT_SECRET}
-      - CHATGROQ_API_KEY=${CHATGROQ_API_KEY}
+      - JWT_SECRET=331693e404e5f565fb38a5d670f39fbcbf97b794950fbe463a978aeeda2aa363e37c0f95b5c4f738234b94c6d92c3bdbb866a274411739af4acdd1738b237e61103251d028bf016d288772109ad388c63855ac7b0474b1c602598ebc70bea383f5b987d79d349251031593da4026e14aa626890c125ac4fa0f2bc21770cf361f1bcc5b827af1b90adb990712055164c10ea587c9aaf3b14a5bda135fd47fad7bc47bab305bb2967946451661fea2ae20c77f7640c2e01104d5e04f0f329f5ce2afd30e136c9cf29774c3e0638da9cfc2dbc43d35acfc0d50f54cc8925272ed4b6223165f7163fbc29882dd1a15b93e90696df1b5ad8d371ee83ca6f494ececd8
+      - CHATGROQ_API_KEY=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
+
     depends_on:
       - mongo
 
