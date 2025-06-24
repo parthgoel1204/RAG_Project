@@ -1,4 +1,3 @@
-// backend/controllers/searchController.js
 const { spawn } = require("child_process");
 const path = require("path");
 const config = require("../config");
@@ -10,7 +9,7 @@ exports.handleSearchQuery = async (req, res) => {
   }
 
   const pythonExe = config.PYTHON_PATH;
-  const script = path.join(__dirname, "..", "..", "rag_engine", "query_faiss.py");
+  const script = path.join(process.cwd(), "rag_engine", "query_faiss.py");
 
   // Pass the ChatGroq API key from environment
   const apiKey = process.env.CHATGROQ_API_KEY;
@@ -18,15 +17,16 @@ exports.handleSearchQuery = async (req, res) => {
     return res.status(500).json({ message: "ChatGroq API key not set." });
   }
 
+  const indexPath = path.join(process.cwd(), "rag_engine", "data", "index.faiss");
   const pyProcess = spawn(
     pythonExe,
     [
       script,
       "--query", queryText,
       "--api_key", apiKey,
-      // you can also override other flags if needed, e.g. --top_k, --index_path, etc.
+      "--index_path", indexPath
     ],
-    { cwd: path.join(__dirname, "..", "..") }
+    { cwd: process.cwd() }
   );
 
   let stdoutData = "";
@@ -45,7 +45,7 @@ exports.handleSearchQuery = async (req, res) => {
       console.error("query_faiss.py exited with code", code);
       return res.status(500).json({
         message: "Error running Python search.",
-        error: stderrData,
+        error: stderrData
       });
     }
 
@@ -56,7 +56,7 @@ exports.handleSearchQuery = async (req, res) => {
       console.error("Failed to parse JSON from query_faiss.py:", err);
       return res.status(500).json({
         message: "Invalid JSON output from search script.",
-        raw: stdoutData,
+        raw: stdoutData
       });
     }
   });

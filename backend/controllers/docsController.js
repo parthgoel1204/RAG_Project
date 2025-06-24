@@ -1,4 +1,3 @@
-// backend/controllers/docsController.js
 const Document = require("../models/Document");
 
 // GET /api/docs

@@ -2,6 +2,7 @@
 import os
 import pdfplumber
 
+
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extracts raw text from a PDF file."""
     text = ""

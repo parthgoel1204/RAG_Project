@@ -12,6 +12,7 @@ RUN npm install --production
 
 # Copy and install Python requirements in a virtual environment
 COPY rag_engine/requirements.txt ./
+ENV PIP_DEFAULT_TIMEOUT=1000
 RUN python3 -m venv /opt/venv \
     && . /opt/venv/bin/activate \
     && pip install --no-cache-dir -r requirements.txt

@@ -1,11 +1,13 @@
-# rag_engine/index_faiss.py
 import os
 import argparse
 import numpy as np
 import faiss
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Build FAISS index from saved embeddings.")
+    parser = argparse.ArgumentParser(
+        description="Build FAISS index from saved embeddings."
+    )
     parser.add_argument(
         "--embeddings_path",
         type=str,
@@ -35,6 +37,7 @@ def main():
     # 4. Write index to disk
     faiss.write_index(index, args.index_path)
     print(f"Saved FAISS index with {num_vectors} vectors to {args.index_path}")
+
 
 if __name__ == "__main__":
     main()

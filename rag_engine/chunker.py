@@ -1,9 +1,9 @@
-# rag_engine/chunker.py
 import os
 import argparse
 import pdfplumber
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List
+
 
 def extract_text_from_pdf(pdf_path: str) -> str:
     """
@@ -17,9 +17,12 @@ def extract_text_from_pdf(pdf_path: str) -> str:
                 text += page_text + "\n"
     return text
 
-def split_into_chunks(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> List[str]:
+
+def split_into_chunks(
+    text: str, chunk_size: int = 1000, chunk_overlap: int = 200
+) -> List[str]:
     """
-    Use LangChain’s RecursiveCharacterTextSplitter to split `text` into 
+    Use LangChain’s RecursiveCharacterTextSplitter to split `text` into
     chunks of at most `chunk_size` characters, with `chunk_overlap` characters overlap.
     """
     splitter = RecursiveCharacterTextSplitter(
@@ -27,26 +30,22 @@ def split_into_chunks(text: str, chunk_size: int = 1000, chunk_overlap: int = 20
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )
-    # splitter.split_text returns a list of strings (each chunk)
     return splitter.split_text(text)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Chunk a PDF or text file.")
     parser.add_argument(
-        "--filepath", 
-        type=str, 
-        required=True, 
-        help="Path to the document (PDF or .txt)"
+        "--filepath", type=str, required=True, help="Path to the document (PDF or .txt)"
     )
     parser.add_argument(
-        "--outdir", 
-        type=str, 
-        default="rag_engine/data/chunks", 
-        help="Directory to save chunked .txt files"
+        "--outdir",
+        type=str,
+        default="rag_engine/data/chunks",
+        help="Directory to save chunked .txt files",
     )
     args = parser.parse_args()
 
-    # Ensure output directory exists
     os.makedirs(args.outdir, exist_ok=True)
 
     # 1. Read the entire document
@@ -66,6 +65,7 @@ def main():
             cf.write(chunk)
 
     print(f"Saved {len(chunks)} chunks to {args.outdir}")
+
 
 if __name__ == "__main__":
     main()

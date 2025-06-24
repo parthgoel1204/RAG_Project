@@ -1,4 +1,3 @@
-# rag_engine/query_faiss.py
 import os
 import argparse
 import json
@@ -7,25 +6,30 @@ import faiss
 from langchain_huggingface import HuggingFaceEmbeddings
 import requests
 
+
 def load_faiss_index(index_path: str):
     if not os.path.exists(index_path):
         raise FileNotFoundError(f"FAISS index not found at {index_path}")
     return faiss.read_index(index_path)
 
+
 def load_chunk_names(chunk_names_path: str):
     return np.load(chunk_names_path, allow_pickle=True)
+
 
 def embed_query(query: str) -> np.ndarray:
     """
     Use LangChain’s HuggingFaceEmbeddings to produce a 1×D float32 vector.
     """
     hf = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vec = hf.embed_query(query)       # returns a Python list or np array
+    vec = hf.embed_query(query)  # returns a Python list or np array
     return np.array(vec, dtype="float32").reshape(1, -1)
+
 
 def retrieve_top_k(index, query_vec: np.ndarray, top_k: int):
     distances, indices = index.search(query_vec, top_k)
     return distances[0], indices[0]
+
 
 def read_chunk_text(chunks_dir: str, chunk_filename: str):
     path = os.path.join(chunks_dir, chunk_filename)
@@ -34,62 +38,75 @@ def read_chunk_text(chunks_dir: str, chunk_filename: str):
     with open(path, "r", encoding="utf-8") as f:
         return f.read().strip()
 
+
 def call_chatgroq(context: str, question: str, api_key: str):
     """
     Call the ChatGroq REST API to generate an answer given the `context` and `question`.
     Adjust the URL, headers, and payload according to ChatGroq’s documentation.
     """
-    url = "https://api.groq.com/openai/v1/chat/completions"  # example endpoint; replace if needed
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     # Build messages array: system + user
     messages = [
-        {"role": "system", "content": (
-            "You are an AI assistant that answers questions based only on provided context. "
-            "If the context does not contain the answer, say you don't know."
-        )},
-        {"role": "user", "content": (
-            f"Context:\n\n{context}\n\n"
-            f"Question: {question}\n\n"
-            "Answer concisely (2-3 sentences) using only the context above."
-        )}
+        {
+            "role": "system",
+            "content": (
+                "You are an AI assistant that answers questions based only on provided context. "
+                "If the context does not contain the answer, say you don't know."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Context:\n\n{context}\n\n"
+                f"Question: {question}\n\n"
+                "Answer concisely (2-3 sentences) using only the context above."
+            ),
+        },
     ]
 
     payload = {
-        "model": "deepseek-r1-distill-llama-70b",   # or whichever model name you’re using
+        "model": "deepseek-r1-distill-llama-70b",
         "messages": messages,
-        "max_tokens": 256,     # tune as needed
-        "temperature": 0.4,    # for deterministic answers
+        "max_tokens": 256,
+        "temperature": 0.4,
     }
 
     response = requests.post(url, headers=headers, json=payload, timeout=30)
     response.raise_for_status()
     data = response.json()
-    # Depending on ChatGroq’s response schema, adjust the path below:
-    # e.g. data["choices"][0]["message"]["content"]
     if "choices" in data and len(data["choices"]) > 0:
         return data["choices"][0]["message"]["content"].strip()
     else:
         return "Error: Unexpected response format from ChatGroq."
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Search FAISS index and get an answer via ChatGroq.")
+    parser = argparse.ArgumentParser(
+        description="Search FAISS index and get an answer via ChatGroq."
+    )
     parser.add_argument("--query", type=str, required=True, help="User’s search query")
     parser.add_argument(
-        "--index_path", type=str, default="rag_engine/data/index.faiss",
-        help="Path to FAISS index file"
+        "--index_path",
+        type=str,
+        default="rag_engine/data/index.faiss",
+        help="Path to FAISS index file",
     )
     parser.add_argument(
-        "--chunk_names", type=str, default="rag_engine/data/chunk_names.npy",
-        help="Path to numpy file containing chunk filenames"
+        "--chunk_names",
+        type=str,
+        default="rag_engine/data/chunk_names.npy",
+        help="Path to numpy file containing chunk filenames",
     )
     parser.add_argument(
-        "--chunks_dir", type=str, default="rag_engine/data/chunks",
-        help="Directory where chunk_*.txt files are stored"
+        "--chunks_dir",
+        type=str,
+        default="rag_engine/data/chunks",
+        help="Directory where chunk_*.txt files are stored",
     )
-    parser.add_argument("--top_k", type=int, default=5, help="Number of top chunks to retrieve")
+    parser.add_argument(
+        "--top_k", type=int, default=5, help="Number of top chunks to retrieve"
+    )
     parser.add_argument("--api_key", type=str, required=True, help="ChatGroq API key")
     args = parser.parse_args()
 
@@ -110,14 +127,15 @@ def main():
             chunk_filename = chunk_filename.decode("utf-8")
 
         chunk_text = read_chunk_text(args.chunks_dir, chunk_filename)
-        # Optionally take only the first N characters for context, or entire chunk
         snippet = chunk_text[:500].replace("\n", " ") + "..."
 
-        retrieved.append({
-            "chunk_filename": chunk_filename,
-            "score": float(score),
-            "snippet": snippet
-        })
+        retrieved.append(
+            {
+                "chunk_filename": chunk_filename,
+                "score": float(score),
+                "snippet": snippet,
+            }
+        )
         context_parts.append(chunk_text)
 
     # 4. Build a single context string by concatenating top_k chunks
@@ -130,11 +148,9 @@ def main():
         answer = f"Error calling ChatGroq: {str(e)}"
 
     # 6. Print JSON to stdout so Node can capture it
-    output = {
-        "answer": answer,
-        "sources": retrieved
-    }
+    output = {"answer": answer, "sources": retrieved}
     print(json.dumps(output))
+
 
 if __name__ == "__main__":
     main()
